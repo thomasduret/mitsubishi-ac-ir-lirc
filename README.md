@@ -40,6 +40,31 @@ Each command has 48 data bits:
 
 `header + 48 * (mark, space) + trailer`
 
+## How the frame layout was found
+
+The layout was derived empirically from captures of the original remote:
+
+1. Capture raw IR timings with an Arduino IR receiver while changing only one thing
+   on the remote at a time, such as temperature, fan speed, mode, or airflow.
+2. Convert the timings into bits. The captures have one repeated mark length and two
+   clear space lengths, so short spaces become `0` and long spaces become `1`.
+3. Put captures side by side and compare only the bits that changed. A temperature
+   sweep is especially useful because all non-temperature settings are held constant.
+4. Notice the protection pattern: bits 9-16 are the logical NOT of bits 1-8, and bits
+   25-32 protect the mode/temp area in the same way.
+5. Identify constants: the first three bits are always `111`, and the last 16 bits are
+   always `0101010010101011` in the captured states.
+6. Label fields by controlled changes:
+   - changing fan speed only moves bits 6-7;
+   - changing mode only moves bits 17-19;
+   - changing temperature only moves bits 21-24 and their inverse bits 29-32;
+   - changing airflow up/down moves bit 4 and its inverse bit 12.
+7. Derive the temperature formula by reading bits 21-24 as LSB-first integers. The
+   pattern matches `temp_code = 32 - temp_deg_c`.
+
+This is why the script includes both a generator and a decoder: new captures can be
+decoded back into named fields and checked against the inferred layout.
+
 ## Frame layout
 
 Bit positions are 1-indexed.
