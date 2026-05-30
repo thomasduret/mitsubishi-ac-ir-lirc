@@ -100,6 +100,39 @@ Decode a saved Arduino dump or CSV timing file:
 python3 mitsubishi_ac_ir.py decode path/to/capture.txt
 ```
 
+## What goes in `path/to/capture.txt`
+
+`path/to/capture.txt` is just a text file containing the serial output from an IR
+receiver capture. You make it by uploading the Arduino sketch in
+`arduino/irrecvdump/irrecvdump.ino`, opening the Arduino Serial Monitor at `9600`
+baud, pointing the AC remote at the IR receiver, and pressing one or more buttons.
+
+The decoder looks for Arduino `Raw (98): ...` lines like this:
+
+```text
+FFFFFFFF
+FFFFFFFF (0 bits)
+Raw (98): -7400 550 -3400 500 -3400 550 -3400 500 -1450 ...
+```
+
+Save that output exactly as text, then decode it:
+
+```sh
+python3 mitsubishi_ac_ir.py decode captures/min-temp.txt
+```
+
+The file may contain several captures one after another. The decoder will print one
+decoded state per `Raw (98)` line, for example:
+
+```text
+raw1: temp=21 mode=AC fan=Low air_ud=ON air_lr=ON feature=Normal ...
+raw2: temp=20 mode=AC fan=Low air_ud=ON air_lr=ON feature=Normal ...
+```
+
+The decoder can also read older CSV/timing rows where each row starts with a label
+followed by raw timing numbers, but the Arduino `Raw (98)` text is the simplest
+format to reproduce.
+
 ## LIRC example
 
 Install or copy `mitsubishi_ac.lircd.conf` into your LIRC configuration, then send a
